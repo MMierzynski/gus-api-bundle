@@ -11,12 +11,12 @@
     ],
     "autoload": {
         "psr-4": {
-            "MMierzynski\\GusApiBundle\\": "src/"
+            "MMierzynski\\GusApi\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "MMierzynski\\GusApiBundle\\Tests\\": "tests/"
+            "MMierzynski\\GusApi\\Tests\\": "tests/"
         }
     },
     "require": {
