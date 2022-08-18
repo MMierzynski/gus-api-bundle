@@ -25,7 +25,7 @@ class GusApiBundle extends AbstractBundle
     {
         $container->import('../config/services.xml');
         
-        $config['env'] = isset($flat_config['env']) ? $flat_config['env'] : 'test';
+        $config['env'] = isset($config['env']) ? $config['env'] : 'test';
 
         $container
             ->parameters()
