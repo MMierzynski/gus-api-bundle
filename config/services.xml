@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://symfony.com/schema/dic/services
+        https://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <parameters>
+        <parameter key="gus_api.env" />
+    </parameters>
+
+    <services>
+        <service id="MMierzynski\GusApi\Client\GusApiClient"
+            class="MMierzynski\GusApi\Client\GusApiClient">
+            <argument>%gus_api.env%</argument>
+        </service>
+    </services>
+</container>
