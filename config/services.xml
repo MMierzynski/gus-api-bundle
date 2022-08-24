@@ -5,12 +5,16 @@
         https://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <parameters>
-        <parameter key="gus_api.env" />
+        <parameter key="gus_api.regon.env" />
     </parameters>
 
     <services>
         <service id="MMierzynski\GusApi\Client\GusApiClient"
             class="MMierzynski\GusApi\Client\GusApiClient">
+        </service>
+
+        <service id="MMierzynski\GusApi\Client\RegonApiClient"
+            class="MMierzynski\GusApi\Client\RegonApiClient">
             <argument>%gus_api.regon.env%</argument>
         </service>
     </services>
