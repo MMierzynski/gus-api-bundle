@@ -11,7 +11,7 @@
     <services>
         <service id="MMierzynski\GusApi\Client\GusApiClient"
             class="MMierzynski\GusApi\Client\GusApiClient">
-            <argument>%gus_api.env%</argument>
+            <argument>%gus_api.regon.env%</argument>
         </service>
     </services>
 </container>
