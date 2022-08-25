@@ -8,14 +8,6 @@ class GusApiClient
 {
 
     protected EnvironmentInterface $environmentConfig;
-
-    protected string $type;
-
-    /*function __construct(private string $environment)
-    {
-        $envFactory = new EnvironmentFactory();
-        $this->environmentConfig = $envFactory->createEnvironment('regon', $environment); 
-    }*/
     
     /**
      * getEnvironment
@@ -25,10 +17,5 @@ class GusApiClient
     public function getEnvironment(): EnvironmentInterface
     {
         return $this->environmentConfig;
-    }
-
-    public function getType(): string
-    {
-        return $this->type;
     }
 }

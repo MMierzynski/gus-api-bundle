@@ -7,7 +7,7 @@ class RegonTestEnvironment implements EnvironmentInterface
 {
     function getApiName(): string
     {
-        return 'api regon';
+        return 'regon';
     }
 
     function getEnvName(): string
