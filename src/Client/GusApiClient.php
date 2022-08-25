@@ -8,6 +8,10 @@ class GusApiClient
 {
 
     protected EnvironmentInterface $environmentConfig;
+
+    protected SoapClient $client;
+
+    protected $context;
     
     /**
      * getEnvironment
