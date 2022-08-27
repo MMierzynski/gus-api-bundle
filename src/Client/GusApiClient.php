@@ -2,17 +2,17 @@
 namespace MMierzynski\GusApi\Client;
 
 use MMierzynski\GusApi\Config\Environment\EnvironmentInterface;
-use MMierzynski\GusApi\Config\Environment\EnvironmentFactory;
+use MMierzynski\GusApi\Model\DTO\Request\LoginModelInterface;
+use MMierzynski\GusApi\Model\DTO\Response\LoginResponseInterface;
 
-class GusApiClient
+abstract class GusApiClient
 {
-    private EnvironmentInterface $environmentConfig;
 
-    function __construct(private string $environment)
-    {
-        $envFactory = new EnvironmentFactory();
-        $this->environmentConfig = $envFactory->createEnvironment('regon', $environment); 
-    }
+    protected EnvironmentInterface $environmentConfig;
+
+    protected SoapClient $client;
+
+    protected $context;
     
     /**
      * getEnvironment
@@ -23,4 +23,6 @@ class GusApiClient
     {
         return $this->environmentConfig;
     }
+
+    abstract public function login(): ?LoginResponseInterface; 
 }

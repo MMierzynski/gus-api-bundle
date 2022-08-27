@@ -2,6 +2,7 @@
 
 namespace MMierzynski\GusApi;
 
+use MMierzynski\GusApi\Exception\BundleMisconfigurationException;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -13,8 +14,14 @@ class GusApiBundle extends AbstractBundle
     {
         $definition->rootNode()
             ->children()
-                ->enumNode('env')
-                ->values(['test', 'prod'])
+                ->arrayNode('regon')
+                    ->children()
+                        ->enumNode('env')
+                            ->values(['test', 'prod'])
+                            ->end()
+                        ->scalarNode('api_key')
+                            ->end()
+                    ->end()
                 ->end()
             ->end()
         ->end();
@@ -25,10 +32,17 @@ class GusApiBundle extends AbstractBundle
     {
         $container->import('../config/services.xml');
         
-        $config['env'] = isset($config['env']) ? $config['env'] : 'test';
+        if (isset($config['regon'])) {
+            if (empty($config['regon']['env']) || empty($config['regon']['api_key'])) {
+                throw new BundleMisconfigurationException('Wrong configuration for REGON API. Required keys: \'env\' and \'api_key\' under \'regon\' key');
+            }
+
+            //$config['regon']['env'] = isset($config['regon']['env']) ? $config['regon']['env'] : null;
+        }
 
         $container
             ->parameters()
-            ->set('gus_api.env', $config['env']);
+            ->set('gus_api.regon.env', $config['regon']['env'])
+            ->set('gus_api.regon.api_key', $config['regon']['api_key']);
     }
 }

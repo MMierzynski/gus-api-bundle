@@ -7,7 +7,7 @@ class RegonProductionEnvironment implements EnvironmentInterface
 {
     function getApiName(): string
     {
-        return 'regon api';
+        return 'regon';
     }
 
     function getEnvName(): string
