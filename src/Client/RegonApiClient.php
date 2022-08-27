@@ -3,8 +3,10 @@
 namespace MMierzynski\GusApi\Client;
 
 use MMierzynski\GusApi\Config\Environment\EnvironmentFactory;
+use MMierzynski\GusApi\Model\DTO\Request\GetValue;
 use MMierzynski\GusApi\Model\DTO\Request\LoginModelInterface;
 use MMierzynski\GusApi\Model\DTO\Request\Zaloguj;
+use MMierzynski\GusApi\Model\DTO\Response\GetValueResponse;
 use MMierzynski\GusApi\Model\DTO\Response\LoginResponseInterface;
 use MMierzynski\GusApi\Model\DTO\Response\ZalogujResponse;
 use SoapFault;
@@ -29,6 +31,7 @@ class RegonApiClient extends GusApiClient
                 'location' => $this->getEnvironment()->getAccessUrl(),
                 'classmap' => [
                     'ZalogujResponse' => ZalogujResponse::class,
+                    'GetValueResponse' => GetValueResponse::class,
                 ]
             ]
         );
@@ -38,16 +41,6 @@ class RegonApiClient extends GusApiClient
     {
         $apiKey = $this->parameters->get('gus_api.regon.api_key');
 
-        /*$headers = [
-            new SoapHeader('http://www.w3.org/2005/08/addressing', 'To', $this->getEnvironment()->getAccessUrl()),
-            new SoapHeader('http://www.w3.org/2005/08/addressing', 'Action', 'http://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/Zaloguj'),
-        ];
-
-        stream_context_set_option($this->context, ['http' => [
-            'header' => 'sid: '.null,
-            'user_agent' => 'GUSAPI Symfony Client',
-        ]]);
-*/
         $headers = $this->preapreHeaders(
             $this->getEnvironment()->getAccessUrl(),
             'http://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/Zaloguj'
@@ -72,7 +65,20 @@ class RegonApiClient extends GusApiClient
 
     public function isUserLogged(): bool
     {
-        return false;
+        $headers = $this->preapreHeaders(
+            $this->getEnvironment()->getAccessUrl(),
+            'http://CIS/BIR/2014/07/IUslugaBIR/GetValue'
+        );
+        
+        $this->setContextOptions();
+
+        $isUserLogged = $this->client->__soapCall(
+            'GetValue', 
+            [new GetValue('StatusSesji')], 
+            [], 
+            $headers);
+
+        return (bool)$isUserLogged->GetValueResult;
     }
 
     protected function preapreHeaders(string $toUrl, string $actionUrl): array
