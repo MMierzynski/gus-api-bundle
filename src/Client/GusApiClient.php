@@ -2,9 +2,10 @@
 namespace MMierzynski\GusApi\Client;
 
 use MMierzynski\GusApi\Config\Environment\EnvironmentInterface;
-use MMierzynski\GusApi\Config\Environment\EnvironmentFactory;
+use MMierzynski\GusApi\Model\DTO\Request\LoginModelInterface;
+use MMierzynski\GusApi\Model\DTO\Response\LoginResponseInterface;
 
-class GusApiClient
+abstract class GusApiClient
 {
 
     protected EnvironmentInterface $environmentConfig;
@@ -22,4 +23,6 @@ class GusApiClient
     {
         return $this->environmentConfig;
     }
+
+    abstract public function login(): ?LoginResponseInterface; 
 }

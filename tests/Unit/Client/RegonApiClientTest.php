@@ -8,6 +8,7 @@ use MMierzynski\GusApi\Config\Environment\EnvironmentFactory;
 use MMierzynski\GusApi\Config\Environment\REGON\RegonTestEnvironment;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 
 final class RegonApiClientTest extends TestCase
 {
@@ -19,7 +20,10 @@ final class RegonApiClientTest extends TestCase
             ->method('createEnvironment')
             ->willReturn(new RegonTestEnvironment());
 
-        $actual = new RegonApiClient('test', $envFactoryMock);
+        $parameterBagMock = $this->createMock(ParameterBag::class);
+
+
+        $actual = new RegonApiClient('test', $envFactoryMock, $parameterBagMock);
 
         $this->assertNotNull($actual->getEnvironment());
         $this->assertInstanceOf(RegonTestEnvironment::class, $actual->getEnvironment());

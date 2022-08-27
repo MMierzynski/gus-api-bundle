@@ -1,7 +1,7 @@
 <?php
 namespace MMierzynski\GusApi\Model\DTO\Request;
 
-class Zaloguj 
+class Zaloguj
 {
     public string $pKluczUzytkownika;
 

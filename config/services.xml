@@ -17,6 +17,7 @@
             class="MMierzynski\GusApi\Client\RegonApiClient">
             <argument>%gus_api.regon.env%</argument>
             <argument type="service" id="MMierzynski\GusApi\Config\Environment\EnvironmentFactory"/>
+            <argument type="service" id="Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface"/>
         </service>
 
         <service id="MMierzynski\GusApi\Config\Environment\EnvironmentFactory"
