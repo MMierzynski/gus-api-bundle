@@ -3,9 +3,12 @@
 namespace MMierzynski\GusApi\Client;
 
 use MMierzynski\GusApi\Config\Environment\EnvironmentFactory;
+use MMierzynski\GusApi\Model\DTO\Request\DaneSzukajPodmioty;
 use MMierzynski\GusApi\Model\DTO\Request\GetValue;
 use MMierzynski\GusApi\Model\DTO\Request\LoginModelInterface;
+use MMierzynski\GusApi\Model\DTO\Request\ParametryWyszukiwania;
 use MMierzynski\GusApi\Model\DTO\Request\Zaloguj;
+use MMierzynski\GusApi\Model\DTO\Response\DaneSzukajPodmiotyResponse;
 use MMierzynski\GusApi\Model\DTO\Response\GetValueResponse;
 use MMierzynski\GusApi\Model\DTO\Response\LoginResponseInterface;
 use MMierzynski\GusApi\Model\DTO\Response\ZalogujResponse;
@@ -32,6 +35,7 @@ class RegonApiClient extends GusApiClient
                 'classmap' => [
                     'ZalogujResponse' => ZalogujResponse::class,
                     'GetValueResponse' => GetValueResponse::class,
+                    'DaneSzukajPodmiotyResponse' => DaneSzukajPodmiotyResponse::class,
                 ]
             ]
         );
@@ -79,6 +83,24 @@ class RegonApiClient extends GusApiClient
             $headers);
 
         return (bool)$isUserLogged->GetValueResult;
+    }
+
+    public function searchForCompany(string $sid, ParametryWyszukiwania $searchParams)
+    {
+        $headers = $this->preapreHeaders(
+            $this->getEnvironment()->getAccessUrl(),
+            'http://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/DaneSzukajPodmioty'
+        );
+        
+        $this->setContextOptions($sid);
+
+        $response = $this->client->__soapCall(
+            'DaneSzukajPodmioty', 
+            [new DaneSzukajPodmioty($searchParams)], 
+            [], 
+            $headers
+        );
+        dump($response);
     }
 
     protected function preapreHeaders(string $toUrl, string $actionUrl): array
