@@ -13,7 +13,7 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class RegonApiClient extends GusApiClient
 {
-    public function __construct(private string $envName, private EnvironmentFactory $envFactory, ParameterBagInterface $parameters)
+    public function __construct(private string $envName, private EnvironmentFactory $envFactory, private ParameterBagInterface $parameters)
     {
         $this->environmentConfig = $this->envFactory->createEnvironment('regon', $envName);
 
@@ -36,7 +36,9 @@ class RegonApiClient extends GusApiClient
 
     public function login(): ?LoginResponseInterface
     {
-        $headers = [
+        $apiKey = $this->parameters->get('gus_api.regon.api_key');
+
+        /*$headers = [
             new SoapHeader('http://www.w3.org/2005/08/addressing', 'To', $this->getEnvironment()->getAccessUrl()),
             new SoapHeader('http://www.w3.org/2005/08/addressing', 'Action', 'http://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/Zaloguj'),
         ];
@@ -45,11 +47,18 @@ class RegonApiClient extends GusApiClient
             'header' => 'sid: '.null,
             'user_agent' => 'GUSAPI Symfony Client',
         ]]);
+*/
+        $headers = $this->preapreHeaders(
+            $this->getEnvironment()->getAccessUrl(),
+            'http://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/Zaloguj'
+        );
+        
+        $this->setContextOptions();
 
         try {
             $response = $this->client->__soapCall(
                 'Zaloguj', 
-                [new Zaloguj('abcde12345abcde12345')],
+                [new Zaloguj($apiKey)],
                 [],
                 $headers
             );    
@@ -59,5 +68,26 @@ class RegonApiClient extends GusApiClient
         }
 
         return $response;
+    }
+
+    public function isUserLogged(): bool
+    {
+        return false;
+    }
+
+    protected function preapreHeaders(string $toUrl, string $actionUrl): array
+    {
+        return [
+            new SoapHeader('http://www.w3.org/2005/08/addressing', 'To', $toUrl),
+            new SoapHeader('http://www.w3.org/2005/08/addressing', 'Action', $actionUrl),
+        ];
+    }
+
+    protected function setContextOptions(?string $sid= null): void
+    {
+        stream_context_set_option($this->context, ['http' => [
+            'header' => 'sid: '.$sid,
+            'user_agent' => 'GUSAPI Symfony Client',
+        ]]);
     }
 }
