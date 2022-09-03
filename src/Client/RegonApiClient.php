@@ -24,7 +24,11 @@ class RegonApiClient extends GusApiClient
         $this->context = stream_context_create([]);
 
         if (!$client) {
-            $client = $this->createSoapClient();
+            $client = $this->createSoapClient([
+                'ZalogujResponse' => ZalogujResponse::class,
+                'GetValueResponse' => GetValueResponse::class,
+                'DaneSzukajPodmiotyResponse' => DaneSzukajPodmiotyResponse::class,
+            ]);
         }
 
         $this->client = $client;
@@ -94,40 +98,5 @@ class RegonApiClient extends GusApiClient
             [], 
             $headers
         );
-    }
-
-    public function createSoapClient(): SoapClient
-    {
-        return new SoapClient(
-            $this->environmentConfig->getWsdlUrl(),
-            [
-                'trace' => 1,
-                "stream_context" => $this->context,
-                'soap_version' => SOAP_1_2,
-                'style' => SOAP_DOCUMENT,
-                'location' => $this->getEnvironment()->getAccessUrl(),
-                'classmap' => [
-                    'ZalogujResponse' => ZalogujResponse::class,
-                    'GetValueResponse' => GetValueResponse::class,
-                    'DaneSzukajPodmiotyResponse' => DaneSzukajPodmiotyResponse::class,
-                ]
-            ]
-        );
-    }
-
-    protected function preapreHeaders(string $toUrl, string $actionUrl): array
-    {
-        return [
-            new SoapHeader('http://www.w3.org/2005/08/addressing', 'To', $toUrl),
-            new SoapHeader('http://www.w3.org/2005/08/addressing', 'Action', $actionUrl),
-        ];
-    }
-
-    protected function setContextOptions(?string $sid= null): void
-    {
-        stream_context_set_option($this->context, ['http' => [
-            'header' => 'sid: '.$sid,
-            'user_agent' => 'GUSAPI Symfony Client',
-        ]]);
     }
 }
