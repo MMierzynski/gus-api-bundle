@@ -68,7 +68,7 @@ class RegonApiClient extends GusApiClient
     {
         $headers = $this->preapreHeaders(
             $this->getEnvironment()->getAccessUrl(),
-            'http://CIS/BIR/2014/07/IUslugaBIR/GetValuer'
+            'http://CIS/BIR/2014/07/IUslugaBIR/GetValue'
         );
         
         $this->setContextOptions();
@@ -98,5 +98,7 @@ class RegonApiClient extends GusApiClient
             [], 
             $headers
         );
+
+        $test = 1;
     }
 }

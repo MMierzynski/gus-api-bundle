@@ -6,6 +6,8 @@ namespace MMierzynski\GusApi\Tests\Unit\Client;
 use MMierzynski\GusApi\Client\RegonApiClient;
 use MMierzynski\GusApi\Client\SoapClient;
 use MMierzynski\GusApi\Exception\InvalidUserCredentialsException;
+use MMierzynski\GusApi\Model\DTO\Request\GetValue;
+use MMierzynski\GusApi\Model\DTO\Response\GetValueResponse;
 use MMierzynski\GusApi\Model\DTO\Response\ZalogujResponse;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -23,14 +25,11 @@ final class RegonApiClientTest extends TestCase
         $parameterBagStub->method('get')
             ->with('gus_api.regon.api_key')
             ->willReturn('valid_api_key');
+        
+        /** @var SoapClient|MockObject $soapClientStub */
+        $soapClientStub = $this->prepareSoapClient(null, new ZalogujResponse($expectedUserKey));
 
-        /** @var SoapClient|MockObject $stub */
-        $stub = $this->getMockFromWsdl(__DIR__.'/../UslugaBIRzewnPubl-ver11-test.wsdl.xml');
-        $stub->method('__soapCall')
-            ->withAnyParameters()
-            ->willReturn(new ZalogujResponse($expectedUserKey));
-
-        $regonApiClient = new RegonApiClient('test', $parameterBagStub, $stub);
+        $regonApiClient = new RegonApiClient('test', $parameterBagStub, $soapClientStub);
         
         
         $actalApiKey = $regonApiClient->login();
@@ -50,16 +49,58 @@ final class RegonApiClientTest extends TestCase
             ->with('gus_api.regon.api_key')
             ->willReturn('valid_api_key');
 
-        /** @var SoapClient|MockObject $stub */
-        $stub = $this->getMockFromWsdl(__DIR__.'/../UslugaBIRzewnPubl-ver11-test.wsdl.xml');
-        $stub->method('__soapCall')
-            ->withAnyParameters()
-            ->willReturn(new ZalogujResponse($expectedUserKey));
+        /** @var SoapClient|MockObject $soapClientStub */
+        $soapClientStub = $this->prepareSoapClient(null, new ZalogujResponse($expectedUserKey));
 
-        $regonApiClient = new RegonApiClient('test', $parameterBagStub, $stub);
+        $regonApiClient = new RegonApiClient('test', $parameterBagStub, $soapClientStub);
         
-        
+
         $this->expectException(InvalidUserCredentialsException::class);
         $regonApiClient->login();
+    }
+
+
+    public function test_check_is_user_logged_in(): void
+    {
+        /** @var ParameterBag|MockObject $parameterBagStub */
+        $parameterBagStub = $this->createStub(ParameterBag::class);
+
+        $soapCallParams = [
+            'GetValue', 
+            [new GetValue('StatusSesji')], 
+            []
+        ];
+        
+        /** @var SoapClient|MockObject $soapClientStub */
+        $soapClientStub = $this->prepareSoapClient(null, new GetValueResponse('1'));
+
+        $regonApiClient = new RegonApiClient('test', $parameterBagStub, $soapClientStub);
+
+
+        $actual = $regonApiClient->isUserLogged();
+
+
+        $this->assertIsBool($actual);
+        $this->assertTrue($actual);
+    }
+
+    private function prepareSoapClient(?array $params, mixed $return): MockObject
+    {
+        
+        $soapClientStub = $this->getMockFromWsdl(__DIR__.'/../UslugaBIRzewnPubl-ver11-test.wsdl.xml');
+        $invocationMocker = $soapClientStub->method('__soapCall');
+
+        if (!empty($params)) {
+            $invocationMocker->with($params);
+        } else {
+            $invocationMocker->withAnyParameters();
+        }    
+        
+        if ($return) {
+            $invocationMocker->willReturn($return);
+        }
+
+        
+        return $soapClientStub;
     }
 }
