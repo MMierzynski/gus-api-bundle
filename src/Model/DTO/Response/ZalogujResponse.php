@@ -10,7 +10,7 @@ class ZalogujResponse implements LoginResponseInterface
         $this->ZalogujResult = $ZalogujResult;
     }
 
-    public function getAccessKey(): ?string
+    public function getAccessKey(): string
     {
         return $this->ZalogujResult;
     }
