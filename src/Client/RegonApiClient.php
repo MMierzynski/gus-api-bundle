@@ -2,12 +2,17 @@
 
 namespace MMierzynski\GusApi\Client;
 
+use DateTimeImmutable;
 use MMierzynski\GusApi\Config\Environment\EnvironmentFactory;
 use MMierzynski\GusApi\Exception\InvalidUserCredentialsException;
+use MMierzynski\GusApi\Model\DTO\Request\DanePobierzPelnyRaport;
+use MMierzynski\GusApi\Model\DTO\Request\DanePobierzRaportZbiorczy;
 use MMierzynski\GusApi\Model\DTO\Request\DaneSzukajPodmioty;
 use MMierzynski\GusApi\Model\DTO\Request\GetValue;
 use MMierzynski\GusApi\Model\DTO\Request\ParametryWyszukiwania;
 use MMierzynski\GusApi\Model\DTO\Request\Zaloguj;
+use MMierzynski\GusApi\Model\DTO\Response\DanePobierzPelnyRaportResponse;
+use MMierzynski\GusApi\Model\DTO\Response\DanePobierzRaportZbiorczyResponse;
 use MMierzynski\GusApi\Model\DTO\Response\DaneSzukajPodmiotyResponse;
 use MMierzynski\GusApi\Model\DTO\Response\GetValueResponse;
 use MMierzynski\GusApi\Model\DTO\Response\ZalogujResponse;
@@ -28,6 +33,8 @@ class RegonApiClient extends GusApiClient
                 'ZalogujResponse' => ZalogujResponse::class,
                 'GetValueResponse' => GetValueResponse::class,
                 'DaneSzukajPodmiotyResponse' => DaneSzukajPodmiotyResponse::class,
+                'DanePobierzPelnyRaportResponse' => DanePobierzPelnyRaportResponse::class,
+                'DanePobierzRaportZbiorczyResponse' => DanePobierzRaportZbiorczyResponse::class
             ]);
         }
 
@@ -99,6 +106,44 @@ class RegonApiClient extends GusApiClient
             $headers
         );
 
-        $test = 1;
+        return null;
+    }
+
+    public function getFullReport(string $sid, string $regon, string $reportName) {
+        $headers = $this->preapreHeaders(
+            $this->getEnvironment()->getAccessUrl(),
+            'http://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/DanePobierzPelnyRaport'
+        );
+
+        $this->setContextOptions($sid);
+
+        $response = $this->client->__soapCall(
+            'DanePobierzPelnyRaport',
+            [new DanePobierzPelnyRaport($regon, $reportName)],
+            [],
+            $headers
+        );
+
+        return null;
+    }
+
+    public function getSummaryReport(string $sid, string $reportName, DateTimeImmutable $reportDate) {
+        $headers = $this->preapreHeaders(
+            $this->getEnvironment()->getAccessUrl(),
+            'http://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/DanePobierzRaportZbiorczy'
+        );
+
+        $this->setContextOptions($sid);
+
+        $date = date('Y-m-d', $reportDate->getTimestamp());
+
+        $response = $this->client->__soapCall(
+            'DanePobierzRaportZbiorczy',
+            [new DanePobierzRaportZbiorczy($date, $reportName)],
+            [],
+            $headers
+        );
+
+        return null;
     }
 }
