@@ -3,6 +3,7 @@ namespace MMierzynski\GusApi\Client;
 
 use MMierzynski\GusApi\Config\Environment\EnvironmentInterface;
 use SoapHeader;
+use Symfony\Component\Serializer\SerializerInterface;
 
 abstract class GusApiClient
 {
@@ -12,6 +13,8 @@ abstract class GusApiClient
     protected \SoapClient $client;
 
     protected $context;
+
+    protected SerializerInterface $serializer;
 
     /**
      * @return string
