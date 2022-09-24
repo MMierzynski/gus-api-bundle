@@ -123,7 +123,7 @@ class RegonApiClient extends GusApiClient
         );
 
     
-        $companyDetails = $this->serializer->deserialize(
+        return $this->serializer->deserialize(
             $response->DaneSzukajPodmiotyResult, 
             CompanyDetails::class, 
             'xml',
@@ -132,8 +132,6 @@ class RegonApiClient extends GusApiClient
                 'xml_root_node_name' => 'dane',
             ]
         );
-
-        return null;
     }
 
     public function getFullReport(string $sid, string $regon, string $reportName) 
