@@ -6,6 +6,7 @@ use DateTimeImmutable;
 use MMierzynski\GusApi\Config\Environment\EnvironmentFactory;
 use MMierzynski\GusApi\Exception\InvalidUserCredentialsException;
 use MMierzynski\GusApi\Model\DTO\CompanyDetails;
+use MMierzynski\GusApi\Model\DTO\Report;
 use MMierzynski\GusApi\Model\DTO\Request\DanePobierzPelnyRaport;
 use MMierzynski\GusApi\Model\DTO\Request\DanePobierzRaportZbiorczy;
 use MMierzynski\GusApi\Model\DTO\Request\DaneSzukajPodmioty;
@@ -17,22 +18,16 @@ use MMierzynski\GusApi\Model\DTO\Response\DanePobierzRaportZbiorczyResponse;
 use MMierzynski\GusApi\Model\DTO\Response\DaneSzukajPodmiotyResponse;
 use MMierzynski\GusApi\Model\DTO\Response\GetValueResponse;
 use MMierzynski\GusApi\Model\DTO\Response\ZalogujResponse;
-use MMierzynski\GusApi\Serializer\Encoder\GusResponseEncoder;
-use MMierzynski\GusApi\Serializer\Normalizer\CompanyDetailsDenormalizer;
+use MMierzynski\GusApi\Serializer\ResponseDeserializer;
 use SoapFault;
-use SoapHeader;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use Symfony\Component\Serializer\Encoder\XmlEncoder;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
-use Symfony\Component\Serializer\Serializer;
-use Symfony\Component\Serializer\SerializerInterface;
 
 class RegonApiClient extends GusApiClient
 {
     public function __construct(
         string $envName, 
         private ParameterBagInterface $parameters, 
+        private ResponseDeserializer $deserializer,
         ?\SoapClient $client = null
         )
     {
@@ -51,10 +46,6 @@ class RegonApiClient extends GusApiClient
         }
 
         $this->client = $client;
-
-        $encoders = [new GusResponseEncoder()];
-        $normalizers = [new CompanyDetailsDenormalizer()];
-        $this->serializer = new Serializer($normalizers, $encoders);
     }
 
     /**
@@ -123,18 +114,13 @@ class RegonApiClient extends GusApiClient
         );
 
     
-        return $this->serializer->deserialize(
+        return $this->deserializer->deserialize(
             $response->DaneSzukajPodmiotyResult, 
-            CompanyDetails::class, 
-            'xml',
-            [
-                AbstractNormalizer::ALLOW_EXTRA_ATTRIBUTES => false,
-                'xml_root_node_name' => 'dane',
-            ]
+            CompanyDetails::class
         );
     }
 
-    public function getFullReport(string $sid, string $regon, string $reportName) 
+    public function getFullReport(string $sid, string $regon, string $reportName): Report 
     {
         $headers = $this->preapreHeaders(
             $this->getEnvironment()->getAccessUrl(),
@@ -150,7 +136,14 @@ class RegonApiClient extends GusApiClient
             $headers
         );
 
-        return null;
+        $report = $this->deserializer->deserialize(
+            $response->DanePobierzPelnyRaportResult,
+            Report::class
+        );
+
+        $report->setReportName($reportName);
+
+        return $report;
     }
 
     public function getSummaryReport(string $sid, string $reportName, DateTimeImmutable $reportDate) 

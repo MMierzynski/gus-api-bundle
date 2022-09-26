@@ -9,7 +9,7 @@ class CompanyDetailsDenormalizer implements DenormalizerInterface
     public function denormalize(mixed $data, string $type, string $format = null, array $context = []) 
     {
         if (isset($data['ErrorCode'])) {
-            throw new \Exception($data['ErrorMessageEn']);
+            throw new \Exception($data['ErrorMessageEn'], $data['ErrorCode']);
         }
 
 

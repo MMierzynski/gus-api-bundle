@@ -4,8 +4,6 @@
     xsi:schemaLocation="http://symfony.com/schema/dic/services
         https://symfony.com/schema/dic/services/services-1.0.xsd">
 
-    
-
     <parameters>
         <parameter key="gus_api.regon.env" />
     </parameters>
@@ -13,10 +11,15 @@
     <services>
         <defaults autowire="true" autoconfigure="true"/>
 
+        <service id="MMierzynski\GusApi\Serializer\ResponseDeserializer"
+            class="MMierzynski\GusApi\Serializer\ResponseDeserializer">
+        </service>
+
         <service id="MMierzynski\GusApi\Client\RegonApiClient"
             class="MMierzynski\GusApi\Client\RegonApiClient">
             <argument>%gus_api.regon.env%</argument>
             <argument type="service" id="Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface"/>
+            <argument type="service" id="MMierzynski\GusApi\Serializer\ResponseDeserializer"/>
         </service>
     </services>
 </container>
