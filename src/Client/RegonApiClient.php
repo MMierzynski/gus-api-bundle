@@ -4,6 +4,7 @@ namespace MMierzynski\GusApi\Client;
 
 use DateTimeImmutable;
 use MMierzynski\GusApi\Config\Environment\EnvironmentFactory;
+use MMierzynski\GusApi\Exception\InvalidReportDateException;
 use MMierzynski\GusApi\Exception\InvalidUserCredentialsException;
 use MMierzynski\GusApi\Model\DTO\CompanyDetails;
 use MMierzynski\GusApi\Model\DTO\Report;
@@ -155,6 +156,12 @@ class RegonApiClient extends GusApiClient
 
         $this->setContextOptions($sid);
 
+        $now = new DateTimeImmutable();
+        if ($now < $reportDate) {
+            throw new InvalidReportDateException();
+        }
+
+
         $date = date('Y-m-d', $reportDate->getTimestamp());
 
         $response = $this->client->__soapCall(
@@ -164,6 +171,8 @@ class RegonApiClient extends GusApiClient
             $headers
         );
 
-        return null;
+        $report = $this->deserializer->deserialize($response->DanePobierzRaportZbiorczyResult, Report::class);
+        $report->setReportName($reportName);
+        return $report;
     }
 }
