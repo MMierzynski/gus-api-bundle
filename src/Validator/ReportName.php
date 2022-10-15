@@ -2,6 +2,7 @@
 
 namespace MMierzynski\GusApi\Validator;
 
+use MMierzynski\GusApi\Utils\FullReportNames;
 use MMierzynski\GusApi\Utils\ReportType;
 use MMierzynski\GusApi\Utils\SummaryReportNames;
 use Symfony\Component\Validator\Constraint;
@@ -29,7 +30,7 @@ class ReportName extends Constraint
     {
         return match($this->reportType) {
             ReportType::TYPE_REGON_SUMMARY => SummaryReportNames::ALLOWED_REPORT_NAMES,
-            ReportType::TYPE_REGON_FULL => [],
+            ReportType::TYPE_REGON_FULL => FullReportNames::ALLOWED_REPORT_NAMES,
             default => []
         };
     }

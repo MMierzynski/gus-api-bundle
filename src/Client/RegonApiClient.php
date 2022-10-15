@@ -5,6 +5,7 @@ namespace MMierzynski\GusApi\Client;
 use DateTime;
 use DateTimeImmutable;
 use MMierzynski\GusApi\Config\Environment\EnvironmentFactory;
+use MMierzynski\GusApi\Exception\InputValidationException;
 use MMierzynski\GusApi\Exception\InvalidReportDateException;
 use MMierzynski\GusApi\Exception\InvalidUserCredentialsException;
 use MMierzynski\GusApi\Model\DTO\CompanyDetails;
@@ -24,7 +25,7 @@ use MMierzynski\GusApi\Serializer\ResponseDeserializer;
 use MMierzynski\GusApi\Utils\ReportType;
 use MMierzynski\GusApi\Validator\ReportDate;
 use MMierzynski\GusApi\Validator\ReportName;
-use MMierzynski\GusApi\Validator\SummaryReportInputValidator;
+use MMierzynski\GusApi\Validator\ReportInputValidator;
 use SoapFault;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Validator\Constraints\Date;
@@ -36,7 +37,7 @@ class RegonApiClient extends GusApiClient
         string $envName, 
         private ParameterBagInterface $parameters, 
         private ResponseDeserializer $deserializer,
-        private SummaryReportInputValidator $reportInputValidator,
+        private ReportInputValidator $reportInputValidator,
         ?\SoapClient $client = null
     ) 
     {
@@ -121,7 +122,6 @@ class RegonApiClient extends GusApiClient
             [], 
             $headers
         );
-
     
         return $this->deserializer->deserialize(
             $response->DaneSzukajPodmiotyResult, 
@@ -136,11 +136,25 @@ class RegonApiClient extends GusApiClient
             'http://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/DanePobierzPelnyRaport'
         );
 
+        $fullReportInput = new DanePobierzPelnyRaport($regon, $reportName);
+
+        $errors = $this->reportInputValidator->validate(
+            $fullReportInput, 
+            [
+                ['pNazwaRaportu' => new NotBlank()],
+                ['pNazwaRaportu' => new ReportName(ReportType::TYPE_REGON_FULL)]
+            ]
+        );
+
+        if (count($errors) > 0 ) {
+            throw new InputValidationException($errors);
+        }
+
         $this->setContextOptions($sid);
 
         $response = $this->client->__soapCall(
             'DanePobierzPelnyRaport',
-            [new DanePobierzPelnyRaport($regon, $reportName)],
+            [$fullReportInput],
             [],
             $headers
         );
@@ -164,12 +178,6 @@ class RegonApiClient extends GusApiClient
 
         $this->setContextOptions($sid);
 
-
-        /*$now = new DateTimeImmutable();
-        if ($now < $reportDate) {
-            throw new InvalidReportDateException();
-        }*/
-
         $date = date('Y-m-d', $reportDate->getTimestamp());
 
         $summaryReportInput = new DanePobierzRaportZbiorczy($date, $reportName);
@@ -186,14 +194,12 @@ class RegonApiClient extends GusApiClient
         );
 
         if (count($errors) > 0 ) {
-            
-            //$errorArray = array_map(fn($error) => $error->getMessage(), iterator_to_array($errors->getIterator()));
-            throw new \Exception(json_encode($errors));
+            throw new InputValidationException($errors);
         }
 
         $response = $this->client->__soapCall(
             'DanePobierzRaportZbiorczy',
-            [new DanePobierzRaportZbiorczy($date, $reportName)],
+            [$summaryReportInput],
             [],
             $headers
         );

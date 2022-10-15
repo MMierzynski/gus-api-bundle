@@ -2,16 +2,15 @@
 namespace MMierzynski\GusApi\Validator;
 
 use InvalidArgumentException;
-use MMierzynski\GusApi\Model\DTO\Request\DanePobierzRaportZbiorczy;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-class SummaryReportInputValidator 
+class ReportInputValidator 
 {
     public function __construct(private ValidatorInterface $validator) {}
 
-    public function validate(DanePobierzRaportZbiorczy $input, array $constraints): array
+    public function validate(mixed $input, array $constraints): array
     {
         foreach ($constraints as $constraint) {
             $errors = $this->validateProperty($input, $constraint);
