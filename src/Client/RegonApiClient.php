@@ -20,8 +20,13 @@ use MMierzynski\GusApi\Model\DTO\Response\DaneSzukajPodmiotyResponse;
 use MMierzynski\GusApi\Model\DTO\Response\GetValueResponse;
 use MMierzynski\GusApi\Model\DTO\Response\ZalogujResponse;
 use MMierzynski\GusApi\Serializer\ResponseDeserializer;
+use MMierzynski\GusApi\Utils\ReportType;
+use MMierzynski\GusApi\Validator\SummaryReport;
+use MMierzynski\GusApi\Validator\ReportName;
 use SoapFault;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class RegonApiClient extends GusApiClient
 {
@@ -29,8 +34,9 @@ class RegonApiClient extends GusApiClient
         string $envName, 
         private ParameterBagInterface $parameters, 
         private ResponseDeserializer $deserializer,
+        private ValidatorInterface $validator,
         ?\SoapClient $client = null
-        )
+    ) 
     {
         $envFactory = new EnvironmentFactory();
         $this->environmentConfig = $envFactory->createEnvironment('regon', $envName);
@@ -156,13 +162,20 @@ class RegonApiClient extends GusApiClient
 
         $this->setContextOptions($sid);
 
+
         $now = new DateTimeImmutable();
         if ($now < $reportDate) {
             throw new InvalidReportDateException();
         }
 
-
         $date = date('Y-m-d', $reportDate->getTimestamp());
+
+        $errors = $this->validator->validate($reportName, new ReportName(ReportType::TYPE_REGON_SUMMARY));
+        if (count($errors) > 0 ) {
+            
+            $errorArray = array_map(fn($error) => $error->getMessage(), iterator_to_array($errors->getIterator()));
+            throw new \Exception(json_encode($errorArray));
+        }
 
         $response = $this->client->__soapCall(
             'DanePobierzRaportZbiorczy',

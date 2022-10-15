@@ -99,6 +99,11 @@ class RegonApiClientBuilder
         return $this;
     }
 
+    public function setValidator(): self 
+    {
+        $this->validator = 
+    }
+
     public function build(): RegonApiClient 
     {
         return new RegonApiClient($this->envName, $this->parameterBag, $this->deserializer, $this->soapClient);
