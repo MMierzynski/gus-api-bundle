@@ -2,6 +2,7 @@
 
 namespace MMierzynski\GusApi\Client;
 
+use DateTime;
 use DateTimeImmutable;
 use MMierzynski\GusApi\Config\Environment\EnvironmentFactory;
 use MMierzynski\GusApi\Exception\InvalidReportDateException;
@@ -21,12 +22,13 @@ use MMierzynski\GusApi\Model\DTO\Response\GetValueResponse;
 use MMierzynski\GusApi\Model\DTO\Response\ZalogujResponse;
 use MMierzynski\GusApi\Serializer\ResponseDeserializer;
 use MMierzynski\GusApi\Utils\ReportType;
-use MMierzynski\GusApi\Validator\SummaryReport;
+use MMierzynski\GusApi\Validator\ReportDate;
 use MMierzynski\GusApi\Validator\ReportName;
+use MMierzynski\GusApi\Validator\SummaryReportInputValidator;
 use SoapFault;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\Validator\Constraints\Date;
 use Symfony\Component\Validator\Constraints\NotBlank;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class RegonApiClient extends GusApiClient
 {
@@ -34,7 +36,7 @@ class RegonApiClient extends GusApiClient
         string $envName, 
         private ParameterBagInterface $parameters, 
         private ResponseDeserializer $deserializer,
-        private ValidatorInterface $validator,
+        private SummaryReportInputValidator $reportInputValidator,
         ?\SoapClient $client = null
     ) 
     {
@@ -163,18 +165,30 @@ class RegonApiClient extends GusApiClient
         $this->setContextOptions($sid);
 
 
-        $now = new DateTimeImmutable();
+        /*$now = new DateTimeImmutable();
         if ($now < $reportDate) {
             throw new InvalidReportDateException();
-        }
+        }*/
 
         $date = date('Y-m-d', $reportDate->getTimestamp());
 
-        $errors = $this->validator->validate($reportName, new ReportName(ReportType::TYPE_REGON_SUMMARY));
+        $summaryReportInput = new DanePobierzRaportZbiorczy($date, $reportName);
+
+        $errors = $this->reportInputValidator->validate(
+            $summaryReportInput, 
+            [
+                ['pNazwaRaportu' => new NotBlank()],
+                ['pNazwaRaportu' => new ReportName(ReportType::TYPE_REGON_SUMMARY)],
+                ['pDataRaportu' => new NotBlank()],
+                ['pDataRaportu' => new Date()],
+                ['pDataRaportu' => new ReportDate()]
+            ]
+        );
+
         if (count($errors) > 0 ) {
             
-            $errorArray = array_map(fn($error) => $error->getMessage(), iterator_to_array($errors->getIterator()));
-            throw new \Exception(json_encode($errorArray));
+            //$errorArray = array_map(fn($error) => $error->getMessage(), iterator_to_array($errors->getIterator()));
+            throw new \Exception(json_encode($errors));
         }
 
         $response = $this->client->__soapCall(

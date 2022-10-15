@@ -17,7 +17,6 @@ class ReportName extends Constraint
     private string $reportType;
 
     public $message = 'The value "{{ value }}" is not valid report name';
-    public string $messageEmptyValue = 'Report name cannot be empty';
     public string $messageInvalidType = 'Report name must be type of string';
 
     public function __construct(string $reportType, mixed $options = null, array $groups = null, mixed $payload = null)

@@ -6,8 +6,6 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 
 class DanePobierzRaportZbiorczy {
     public string $pDataRaportu;
-    #[NotBlank()]
-    #[SummaryReportName()]
     public string $pNazwaRaportu;
 
     public function __construct(string $pDataRaportu, string $pNazwaRaportu)

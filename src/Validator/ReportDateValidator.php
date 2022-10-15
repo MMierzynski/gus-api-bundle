@@ -5,29 +5,31 @@ namespace MMierzynski\GusApi\Validator;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 
-class ReportNameValidator extends ConstraintValidator
+class ReportDateValidator extends ConstraintValidator
 {
     public function validate($value, Constraint $constraint)
     {
-        if (! $constraint instanceof ReportName) {
+        if (! $constraint instanceof ReportDate) {
             return;
         }
 
         if (null === $value || '' === $value) {
             return;
-        } 
-
-        if (!is_string($value)) {
-            $this->context->buildViolation($constraint->messageInvalidType)
-            ->addViolation();
-
-            return;
         }
 
-        if (!in_array($value, $constraint->getValidReportNames())) {
-            $this->context->buildViolation($constraint->message)
+        $nowTimestamp = time();
+        $reportTimestamp = strtotime($value);
+
+        if (!$reportTimestamp) {
+            $this->context->buildViolation($constraint->messageInvalidDateFormat)
                 ->setParameter('{{ value }}', $value)
                 ->addViolation();
         }
+
+        if ($nowTimestamp <= $reportTimestamp) {
+            $this->context->buildViolation($constraint->message)
+                ->setParameter('{{ value }}', $value)
+                ->addViolation();
+        } 
     }
 }

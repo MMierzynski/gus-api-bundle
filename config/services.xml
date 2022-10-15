@@ -9,29 +9,13 @@
     </parameters>
 
     <services>
-
         <service id="MMierzynski\GusApi\Serializer\ResponseDeserializer"
             class="MMierzynski\GusApi\Serializer\ResponseDeserializer">
-        </service>
+        </service>   
 
-        <service id="Mierzynski\GusApi\Validator\SummaryReport"
-            class="Mierzynski\GusApi\Validator\SummaryReport">
-        </service>
-
-        <service id="validator.summary_report" 
-            class="Mierzynski\GusApi\Validator\SummaryReportValidator">
-            <tag name="validator.constraint_validator" 
-                alias="Mierzynski\GusApi\Validator\SummaryReportValidator"/>
-        </service>
-
-        <service id="Mierzynski\GusApi\Validator\ReportName"
-            class="Mierzynski\GusApi\Validator\ReportName">
-        </service>
-
-        <service id="validator.report_name" 
-            class="Mierzynski\GusApi\Validator\ReportNameValidator">
-            <tag name="validator.constraint_validator" 
-                alias="Mierzynski\GusApi\Validator\ReportNameValidator"/>
+        <service id="MMierzynski\GusApi\Validator\SummaryReportInputValidator"
+            class="MMierzynski\GusApi\Validator\SummaryReportInputValidator">
+            <argument type="service" id="validator"/>
         </service>
 
         <service id="MMierzynski\GusApi\Client\RegonApiClient"
@@ -39,7 +23,7 @@
             <argument>%gus_api.regon.env%</argument>
             <argument type="service" id="Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface"/>
             <argument type="service" id="MMierzynski\GusApi\Serializer\ResponseDeserializer"/>
-            <argument type="service" id="validator"/>
+            <argument type="service" id="MMierzynski\GusApi\Validator\SummaryReportInputValidator"/>
         </service>
     </services>
 </container>
