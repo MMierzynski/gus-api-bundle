@@ -6,7 +6,7 @@ use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-class ReportInputValidator 
+class InputValidator 
 {
     public function __construct(private ValidatorInterface $validator) {}
 

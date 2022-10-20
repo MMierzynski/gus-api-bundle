@@ -4,9 +4,9 @@ namespace MMierzynski\GusApi\Model\DTO\Request;
 
 class SearchCompany 
 {
-    public ParametryWyszukiwania $pParametryWyszukiwania;
+    public SearchCompanyParams $pParametryWyszukiwania;
     
-    public function __construct(ParametryWyszukiwania $pParametryWyszukiwania)
+    public function __construct(SearchCompanyParams $pParametryWyszukiwania)
     {
         $this->pParametryWyszukiwania = $pParametryWyszukiwania;
     }

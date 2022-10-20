@@ -2,7 +2,6 @@
 
 namespace MMierzynski\GusApi\Client;
 
-use DateTime;
 use DateTimeImmutable;
 use MMierzynski\GusApi\Config\Environment\EnvironmentFactory;
 use MMierzynski\GusApi\Exception\InputValidationException;
@@ -12,10 +11,9 @@ use MMierzynski\GusApi\Model\DTO\Report;
 use MMierzynski\GusApi\Model\DTO\Request\FullReport;
 use MMierzynski\GusApi\Model\DTO\Request\GetValue;
 use MMierzynski\GusApi\Model\DTO\Request\Login;
-use MMierzynski\GusApi\Model\DTO\Request\ParametryWyszukiwania;
 use MMierzynski\GusApi\Model\DTO\Request\SearchCompany;
+use MMierzynski\GusApi\Model\DTO\Request\SearchCompanyParams;
 use MMierzynski\GusApi\Model\DTO\Request\SummaryReport;
-use MMierzynski\GusApi\Model\DTO\Request\Zaloguj;
 use MMierzynski\GusApi\Model\DTO\Response\FullReportResponse;
 use MMierzynski\GusApi\Model\DTO\Response\GetValueResponse;
 use MMierzynski\GusApi\Model\DTO\Response\LoginResponse;
@@ -23,9 +21,9 @@ use MMierzynski\GusApi\Model\DTO\Response\SearchCompanyResponse;
 use MMierzynski\GusApi\Model\DTO\Response\SummaryReportResponse;
 use MMierzynski\GusApi\Serializer\ResponseDeserializer;
 use MMierzynski\GusApi\Utils\ReportType;
+use MMierzynski\GusApi\Validator\InputValidator;
 use MMierzynski\GusApi\Validator\ReportDate;
 use MMierzynski\GusApi\Validator\ReportName;
-use MMierzynski\GusApi\Validator\ReportInputValidator;
 use SoapFault;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Validator\Constraints\Date;
@@ -37,13 +35,14 @@ class RegonApiClient extends GusApiClient
         string $envName, 
         private ParameterBagInterface $parameters, 
         private ResponseDeserializer $deserializer,
-        private ReportInputValidator $reportInputValidator,
+        InputValidator $inputValidator,
         ?\SoapClient $client = null
     ) 
     {
         $envFactory = new EnvironmentFactory();
         $this->environmentConfig = $envFactory->createEnvironment('regon', $envName);
         $this->context = stream_context_create([]);
+        $this->inputValidator = $inputValidator;
 
         if (!$client) {
             $client = $this->createSoapClient([
@@ -65,6 +64,11 @@ class RegonApiClient extends GusApiClient
     public function login(): string
     {
         $apiKey = $this->parameters->get('gus_api.regon.api_key');
+        $loginInput = new Login($apiKey);
+        
+        $this->validateInputObject($loginInput, [
+            ['pKluczUzytkownika' => new NotBlank()]
+        ]);
 
         $headers = $this->preapreHeaders(
             $this->getEnvironment()->getAccessUrl(),
@@ -76,7 +80,7 @@ class RegonApiClient extends GusApiClient
         /** @var LoginResponse $response */
         $response = $this->client->__soapCall(
             'Zaloguj', 
-            [new Login($apiKey)],
+            [$loginInput],
             [],
             $headers
         );    
@@ -107,7 +111,7 @@ class RegonApiClient extends GusApiClient
         return (bool)$isUserLogged->GetValueResult;
     }
 
-    public function searchForCompany(string $sid, ParametryWyszukiwania $searchParams)
+    public function searchForCompany(string $sid, SearchCompanyParams $searchParams)
     {
         $headers = $this->preapreHeaders(
             $this->getEnvironment()->getAccessUrl(),
@@ -138,17 +142,13 @@ class RegonApiClient extends GusApiClient
 
         $fullReportInput = new FullReport($regon, $reportName);
 
-        $errors = $this->reportInputValidator->validate(
+        $this->validateInputObject(
             $fullReportInput, 
             [
                 ['pNazwaRaportu' => new NotBlank()],
                 ['pNazwaRaportu' => new ReportName(ReportType::TYPE_REGON_FULL)]
             ]
         );
-
-        if (count($errors) > 0 ) {
-            throw new InputValidationException($errors);
-        }
 
         $this->setContextOptions($sid);
 
@@ -182,7 +182,7 @@ class RegonApiClient extends GusApiClient
 
         $summaryReportInput = new SummaryReport($date, $reportName);
 
-        $errors = $this->reportInputValidator->validate(
+        $this->validateInputObject(
             $summaryReportInput, 
             [
                 ['pNazwaRaportu' => new NotBlank()],
@@ -192,10 +192,6 @@ class RegonApiClient extends GusApiClient
                 ['pDataRaportu' => new ReportDate()]
             ]
         );
-
-        if (count($errors) > 0 ) {
-            throw new InputValidationException($errors);
-        }
 
         $response = $this->client->__soapCall(
             'DanePobierzRaportZbiorczy',

@@ -2,6 +2,8 @@
 namespace MMierzynski\GusApi\Client;
 
 use MMierzynski\GusApi\Config\Environment\EnvironmentInterface;
+use MMierzynski\GusApi\Exception\InputValidationException;
+use MMierzynski\GusApi\Validator\InputValidator;
 use SoapHeader;
 use Symfony\Component\Serializer\SerializerInterface;
 
@@ -15,6 +17,8 @@ abstract class GusApiClient
     protected $context;
 
     protected SerializerInterface $serializer;
+
+    protected InputValidator $inputValidator;
 
     /**
      * @return string
@@ -75,5 +79,16 @@ abstract class GusApiClient
             'header' => 'sid: '.$sid,
             'user_agent' => 'GUSAPI Symfony Client',
         ]]);
+    }
+
+    protected function validateInputObject(mixed $input, array $constrinats) {
+        $errors = $this->inputValidator->validate(
+            $input, 
+            $constrinats
+        );
+
+        if (count($errors) > 0 ) {
+            throw new InputValidationException($errors);
+        }
     }
 }
