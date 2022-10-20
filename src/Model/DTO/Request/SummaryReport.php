@@ -4,7 +4,7 @@ namespace MMierzynski\GusApi\Model\DTO\Request;
 use MMierzynski\GusApi\Validator\SummaryReportName;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
-class DanePobierzRaportZbiorczy {
+class SummaryReport {
     public string $pDataRaportu;
     public string $pNazwaRaportu;
 

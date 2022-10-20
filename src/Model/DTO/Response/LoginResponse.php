@@ -1,7 +1,7 @@
 <?php
 namespace MMierzynski\GusApi\Model\DTO\Response;
 
-class ZalogujResponse implements LoginResponseInterface
+class LoginResponse implements LoginResponseInterface
 {
     public string $ZalogujResult;
 

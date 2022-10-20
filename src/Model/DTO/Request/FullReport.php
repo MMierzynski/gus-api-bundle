@@ -2,7 +2,8 @@
 namespace MMierzynski\GusApi\Model\DTO\Request;
 
 
-class DanePobierzPelnyRaport {
+class FullReport 
+{
     public string $pRegon;
     public string $pNazwaRaportu;
 

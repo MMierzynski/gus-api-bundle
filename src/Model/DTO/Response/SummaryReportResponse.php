@@ -2,7 +2,7 @@
 namespace MMierzynski\GusApi\Model\DTO\Response;
 
 
-class DanePobierzRaportZbiorczyResponse {
+class SummaryReportResponse {
     public string $DanePobierzRaportZbiorczyResult;
     
     public function __construct(string $DanePobierzRaportZbiorczyResult)

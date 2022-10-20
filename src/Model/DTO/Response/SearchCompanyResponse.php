@@ -2,7 +2,7 @@
 namespace MMierzynski\GusApi\Model\DTO\Response;
 
 
-class DaneSzukajPodmiotyResponse {
+class SearchCompanyResponse {
     public string $DaneSzukajPodmiotyResult;
     
     public function __construct(string $DaneSzukajPodmiotyResult)

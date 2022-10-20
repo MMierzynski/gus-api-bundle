@@ -6,21 +6,21 @@ use DateTime;
 use DateTimeImmutable;
 use MMierzynski\GusApi\Config\Environment\EnvironmentFactory;
 use MMierzynski\GusApi\Exception\InputValidationException;
-use MMierzynski\GusApi\Exception\InvalidReportDateException;
 use MMierzynski\GusApi\Exception\InvalidUserCredentialsException;
 use MMierzynski\GusApi\Model\DTO\CompanyDetails;
 use MMierzynski\GusApi\Model\DTO\Report;
-use MMierzynski\GusApi\Model\DTO\Request\DanePobierzPelnyRaport;
-use MMierzynski\GusApi\Model\DTO\Request\DanePobierzRaportZbiorczy;
-use MMierzynski\GusApi\Model\DTO\Request\DaneSzukajPodmioty;
+use MMierzynski\GusApi\Model\DTO\Request\FullReport;
 use MMierzynski\GusApi\Model\DTO\Request\GetValue;
+use MMierzynski\GusApi\Model\DTO\Request\Login;
 use MMierzynski\GusApi\Model\DTO\Request\ParametryWyszukiwania;
+use MMierzynski\GusApi\Model\DTO\Request\SearchCompany;
+use MMierzynski\GusApi\Model\DTO\Request\SummaryReport;
 use MMierzynski\GusApi\Model\DTO\Request\Zaloguj;
-use MMierzynski\GusApi\Model\DTO\Response\DanePobierzPelnyRaportResponse;
-use MMierzynski\GusApi\Model\DTO\Response\DanePobierzRaportZbiorczyResponse;
-use MMierzynski\GusApi\Model\DTO\Response\DaneSzukajPodmiotyResponse;
+use MMierzynski\GusApi\Model\DTO\Response\FullReportResponse;
 use MMierzynski\GusApi\Model\DTO\Response\GetValueResponse;
-use MMierzynski\GusApi\Model\DTO\Response\ZalogujResponse;
+use MMierzynski\GusApi\Model\DTO\Response\LoginResponse;
+use MMierzynski\GusApi\Model\DTO\Response\SearchCompanyResponse;
+use MMierzynski\GusApi\Model\DTO\Response\SummaryReportResponse;
 use MMierzynski\GusApi\Serializer\ResponseDeserializer;
 use MMierzynski\GusApi\Utils\ReportType;
 use MMierzynski\GusApi\Validator\ReportDate;
@@ -47,11 +47,11 @@ class RegonApiClient extends GusApiClient
 
         if (!$client) {
             $client = $this->createSoapClient([
-                'ZalogujResponse' => ZalogujResponse::class,
+                'ZalogujResponse' => LoginResponse::class,
                 'GetValueResponse' => GetValueResponse::class,
-                'DaneSzukajPodmiotyResponse' => DaneSzukajPodmiotyResponse::class,
-                'DanePobierzPelnyRaportResponse' => DanePobierzPelnyRaportResponse::class,
-                'DanePobierzRaportZbiorczyResponse' => DanePobierzRaportZbiorczyResponse::class
+                'DaneSzukajPodmiotyResponse' => SearchCompanyResponse::class,
+                'DanePobierzPelnyRaportResponse' => FullReportResponse::class,
+                'DanePobierzRaportZbiorczyResponse' => SummaryReportResponse::class
             ]);
         }
 
@@ -73,10 +73,10 @@ class RegonApiClient extends GusApiClient
         
         $this->setContextOptions();
 
-        /** @var ZalogujResponse $response */
+        /** @var LoginResponse $response */
         $response = $this->client->__soapCall(
             'Zaloguj', 
-            [new Zaloguj($apiKey)],
+            [new Login($apiKey)],
             [],
             $headers
         );    
@@ -115,10 +115,10 @@ class RegonApiClient extends GusApiClient
         );
         
         $this->setContextOptions($sid);
-        /** @var DaneSzukajPodmiotyResponse $response */
+        /** @var SearchCompanyResponse $response */
         $response = $this->client->__soapCall(
             'DaneSzukajPodmioty', 
-            [new DaneSzukajPodmioty($searchParams)], 
+            [new SearchCompany($searchParams)], 
             [], 
             $headers
         );
@@ -136,7 +136,7 @@ class RegonApiClient extends GusApiClient
             'http://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/DanePobierzPelnyRaport'
         );
 
-        $fullReportInput = new DanePobierzPelnyRaport($regon, $reportName);
+        $fullReportInput = new FullReport($regon, $reportName);
 
         $errors = $this->reportInputValidator->validate(
             $fullReportInput, 
@@ -180,7 +180,7 @@ class RegonApiClient extends GusApiClient
 
         $date = date('Y-m-d', $reportDate->getTimestamp());
 
-        $summaryReportInput = new DanePobierzRaportZbiorczy($date, $reportName);
+        $summaryReportInput = new SummaryReport($date, $reportName);
 
         $errors = $this->reportInputValidator->validate(
             $summaryReportInput, 
