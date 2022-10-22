@@ -1,14 +1,13 @@
 <?php
 namespace MMierzynski\GusApi\Tests\Support;
 
-
-use MMierzynski\GusApi\Model\DTO\Response\DanePobierzPelnyRaportResponse;
-use MMierzynski\GusApi\Model\DTO\Response\DanePobierzRaportZbiorczyResponse;
-use MMierzynski\GusApi\Model\DTO\Response\DaneSzukajPodmiotyResponse;
+use MMierzynski\GusApi\Model\DTO\Response\FullReportResponse;
+use MMierzynski\GusApi\Model\DTO\Response\SearchCompanyResponse;
+use MMierzynski\GusApi\Model\DTO\Response\SummaryReportResponse;
 
 trait SampleDataProvider 
 {
-    private function getSampleSeachCompanyResponseObject(bool $useEmpty = false): DaneSzukajPodmiotyResponse
+    private function getSampleSeachCompanyResponseObject(bool $useEmpty = false): SearchCompanyResponse
     {
         $responseData = "<root>
             <dane>
@@ -35,10 +34,10 @@ trait SampleDataProvider
             $responseData = '';
         }
 
-        return new DaneSzukajPodmiotyResponse($responseData);
+        return new SearchCompanyResponse($responseData);
     }
 
-    private function getSampleFullReportResponseObject(bool $withError = false): DanePobierzPelnyRaportResponse
+    private function getSampleFullReportResponseObject(bool $withError = false): FullReportResponse
     {
         $responseData = "<root>
             <dane>
@@ -113,10 +112,10 @@ trait SampleDataProvider
           </root>";
         }
 
-        return new DanePobierzPelnyRaportResponse($responseData);
+        return new FullReportResponse($responseData);
     }
 
-    private function getSampleSummaryReportResponseObject(bool $withError = false): DanePobierzRaportZbiorczyResponse
+    private function getSampleSummaryReportResponseObject(bool $withError = false): SummaryReportResponse
     {
         $responseData = "<root>
             <dane>
@@ -146,6 +145,6 @@ trait SampleDataProvider
           </root>";
         }
 
-        return new DanePobierzRaportZbiorczyResponse($responseData);
+        return new SummaryReportResponse($responseData);
     }
 }

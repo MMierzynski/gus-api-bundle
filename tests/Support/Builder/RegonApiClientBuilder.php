@@ -4,18 +4,22 @@ namespace MMierzynski\GusApi\Tests\Support\Builder;
 use MMierzynski\GusApi\Client\RegonApiClient;
 use MMierzynski\GusApi\Client\SoapClient as ClientSoapClient;
 use MMierzynski\GusApi\Serializer\ResponseDeserializer;
+use MMierzynski\GusApi\Validator\InputValidator;
 use PHPUnit\Framework\MockObject\MockBuilder;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use SoapClient;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\Validator\Validator\TraceableValidator;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class RegonApiClientBuilder 
 {
     private ParameterBagInterface|MockObject $parameterBag;
     private ResponseDeserializer $deserializer;
     private SoapClient|MockObject $soapClient;
+    private InputValidator $inputValidator;
     private string $envName;
 
     public function __construct(private TestCase $testCase)
@@ -41,17 +45,7 @@ class RegonApiClientBuilder
             throw new \Exception("ParamaterBag not initialized");
         }
 
-        $invocationMocker = $this->parameterBag->method('get');
-
-        if (!empty($parameter)) {
-            $invocationMocker->with($parameter);
-        } else {
-            $invocationMocker->withAnyParameters();
-        }
-
-        if ($return) {
-            $invocationMocker->willReturn($return);
-        }
+        $this->stubMethod($this->parameterBag, $methodName, $parameter, $return);
 
         return $this;
     }
@@ -69,21 +63,21 @@ class RegonApiClientBuilder
             throw new \Exception("SoapClient not initialized");
         }
 
-        $invocationMocker = $this->soapClient->method('__soapCall');
-
-        if (!empty($parameter)) {
-            $invocationMocker->with($parameter);
-        } else {
-            $invocationMocker->withAnyParameters();
-        }    
-        
-        if ($return) {
-            $invocationMocker->willReturn($return);
-        }
+        $this->stubMethod($this->soapClient, '__soapCall', $parameter, $return);
 
         return $this;
     }
 
+    public function stubValidator(?array $parameter, mixed $return): self
+    {
+        /** @var ValidatorInterface|MockObject */
+        $validatorStub = $this->createMock(ValidatorInterface::class);
+        $this->stubMethod($validatorStub, 'validate', $parameter, $return);
+        
+        $this->inputValidator = new InputValidator($validatorStub);
+
+        return $this;
+    }
 
     public function setDeserializer(): self 
     {
@@ -99,14 +93,16 @@ class RegonApiClientBuilder
         return $this;
     }
 
-    public function setValidator(): self 
-    {
-        $this->validator = 
-    }
 
     public function build(): RegonApiClient 
     {
-        return new RegonApiClient($this->envName, $this->parameterBag, $this->deserializer, $this->soapClient);
+        return new RegonApiClient(
+            $this->envName, 
+            $this->parameterBag, 
+            $this->deserializer, 
+            $this->inputValidator, 
+            $this->soapClient
+        );
     }
 
     private function createMock(string $className): MockObject
@@ -117,5 +113,20 @@ class RegonApiClientBuilder
             ->disableArgumentCloning()
             ->disallowMockingUnknownTypes()
             ->getMock();
+    }
+
+    private function stubMethod(MockObject $stub, string $methodName, mixed $parameter, mixed $return): void 
+    {
+        $invocationMocker = $stub->method($methodName);
+
+        if (!empty($parameter)) {
+            $invocationMocker->with($parameter);
+        } else {
+            $invocationMocker->withAnyParameters();
+        }    
+        
+        if ($return) {
+            $invocationMocker->willReturn($return);
+        }
     }
 }

@@ -5,17 +5,20 @@ namespace MMierzynski\GusApi\Tests\Unit\Client;
 
 use DateTimeImmutable;
 use Exception;
+use MMierzynski\GusApi\Exception\InputValidationException;
 use MMierzynski\GusApi\Exception\InvalidReportDateException;
 use MMierzynski\GusApi\Exception\InvalidUserCredentialsException;
 use MMierzynski\GusApi\Exception\ReportException;
 use MMierzynski\GusApi\Model\DTO\CompanyDetails;
 use MMierzynski\GusApi\Model\DTO\Report;
-use MMierzynski\GusApi\Model\DTO\Request\ParametryWyszukiwania;
+use MMierzynski\GusApi\Model\DTO\Request\SearchCompanyParams;
 use MMierzynski\GusApi\Model\DTO\Response\GetValueResponse;
-use MMierzynski\GusApi\Model\DTO\Response\ZalogujResponse;
+use MMierzynski\GusApi\Model\DTO\Response\LoginResponse;
 use MMierzynski\GusApi\Tests\Support\Builder\RegonApiClientBuilder;
 use MMierzynski\GusApi\Tests\Support\SampleDataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Validator\ConstraintViolation;
+use Symfony\Component\Validator\ConstraintViolationList;
 
 final class RegonApiClientTest extends TestCase
 {
@@ -31,7 +34,8 @@ final class RegonApiClientTest extends TestCase
             ->setParamaterBagStub()
             ->stubParameterBagMethod(methodName:'get', parameter:'gus_api.regon.api_key', return:'valid_api_key')
             ->setSoapClientStub()
-            ->stubSoapCallMethod(null, new ZalogujResponse($expectedUserKey))
+            ->stubSoapCallMethod(null, new LoginResponse($expectedUserKey))
+            ->stubValidator(null, new ConstraintViolationList([]))
             ->setDeserializer()
             ->build();
         
@@ -50,7 +54,8 @@ final class RegonApiClientTest extends TestCase
             ->setParamaterBagStub()
             ->stubParameterBagMethod(methodName:'get', parameter:'gus_api.regon.api_key', return:'invalid_api_key')
             ->setSoapClientStub()
-            ->stubSoapCallMethod(null, new ZalogujResponse(''))
+            ->stubSoapCallMethod(null, new LoginResponse(''))
+            ->stubValidator(null, new ConstraintViolationList([]))
             ->setDeserializer()
             ->build();
         
@@ -70,6 +75,7 @@ final class RegonApiClientTest extends TestCase
             ->setSoapClientStub()
             ->stubSoapCallMethod(null, new GetValueResponse('1'))
             ->setDeserializer()
+            ->stubValidator(null, new ConstraintViolationList([]))
             ->build();
 
         // act
@@ -89,10 +95,11 @@ final class RegonApiClientTest extends TestCase
             ->setParamaterBag()
             ->setSoapClientStub()
             ->stubSoapCallMethod(parameter: null, return: $this->getSampleSeachCompanyResponseObject())
+            ->stubValidator(null, null)
             ->setDeserializer()
             ->build();
 
-        $searchParams = new ParametryWyszukiwania(Regon: '123456789');
+        $searchParams = new SearchCompanyParams(Regon: '123456789');
 
         // act
         $result = $regonApiClient->searchForCompany('test_access_key', $searchParams);
@@ -110,10 +117,11 @@ final class RegonApiClientTest extends TestCase
             ->setParamaterBag()
             ->setSoapClientStub()
             ->stubSoapCallMethod(parameter: null, return: $this->getSampleSeachCompanyResponseObject(useEmpty: true))
+            ->stubValidator(null, null)
             ->setDeserializer()
             ->build();
 
-        $searchParams = new ParametryWyszukiwania(Regon: '123456789');
+        $searchParams = new SearchCompanyParams(Regon: '123456789');
 
         // act
         // assert
@@ -129,6 +137,7 @@ final class RegonApiClientTest extends TestCase
             ->setParamaterBag()
             ->setSoapClientStub()
             ->stubSoapCallMethod(parameter: null, return: $this->getSampleFullReportResponseObject())
+            ->stubValidator(null, new ConstraintViolationList([]))
             ->setDeserializer()
             ->build();
 
@@ -150,6 +159,7 @@ final class RegonApiClientTest extends TestCase
             ->setParamaterBag()
             ->setSoapClientStub()
             ->stubSoapCallMethod(null, $this->getSampleFullReportResponseObject(withError: true))
+            ->stubValidator(null, new ConstraintViolationList([]))
             ->setDeserializer()
             ->build();
 
@@ -169,6 +179,7 @@ final class RegonApiClientTest extends TestCase
             ->setDeserializer()
             ->setSoapClientStub()
             ->stubSoapCallMethod(null, $this->getSampleSummaryReportResponseObject())
+            ->stubValidator(null, new ConstraintViolationList([]))
             ->build();
 
         // act
@@ -183,17 +194,27 @@ final class RegonApiClientTest extends TestCase
     public function test_get_summary_report_with_future_date_from_gus(): void
     {
         // arange
+        $violation = new ConstraintViolation(
+            message: 'The value is not valid report date',
+            messageTemplate: 'The value is not valid report date',
+            parameters: [],
+            root: '',
+            propertyPath: '',
+            invalidValue: ''
+        );
+
         $regonApiClientBuilder = new RegonApiClientBuilder($this);
         $regonApiClient = $regonApiClientBuilder->setEnvName('test')
             ->setParamaterBag()
             ->setDeserializer()
             ->setSoapClientStub()
             ->stubSoapCallMethod(null, $this->getSampleSummaryReportResponseObject())
+            ->stubValidator(null, new ConstraintViolationList([$violation]))
             ->build();
 
         // act
         //assert
-        $this->expectException(InvalidReportDateException::class);
+        $this->expectException(InputValidationException::class);
         $result = $regonApiClient->getSummaryReport(
             'test_access_key', 
             'BIR11NowePodmiotyPrawneOrazDzialalnosciOsFizycznych', 
