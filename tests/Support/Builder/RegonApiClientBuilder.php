@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 use SoapClient;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use Symfony\Component\Validator\Validator\TraceableValidator;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class RegonApiClientBuilder 

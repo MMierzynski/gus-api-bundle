@@ -51,7 +51,7 @@ class InputValidator
                 sprintf(
                     'Invalid type of constraint object in constraints argument, expected "%s" found %s instead', 
                     Constraint::class, 
-                    get_class($constraintObject)
+                    gettype($constraintObject)
                 )
             );
         }
