@@ -12,9 +12,8 @@ class CompanyDetailsDenormalizer implements DenormalizerInterface
             throw new \Exception($data['ErrorMessageEn'], $data['ErrorCode']);
         }
 
-
         /** @var CompanyDetails $object */
-        $object =  new CompanyDetails();
+        $object =  new $type();
         $object->setRegon($data['Regon'])
             ->setNip($data['Nip'])
             ->setNipStatus($data['StatusNip'])
@@ -38,6 +37,6 @@ class CompanyDetailsDenormalizer implements DenormalizerInterface
 
     public function supportsDenormalization(mixed $data, string $type, string $format = null) 
     {   
-        return CompanyDetails::class === $type;
+        return CompanyDetails::class === $type && 'xml' === $format;
     }
 }

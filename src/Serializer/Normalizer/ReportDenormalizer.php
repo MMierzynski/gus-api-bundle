@@ -13,7 +13,7 @@ class ReportDenormalizer implements DenormalizerInterface
             throw new ReportException($data['ErrorMessagePl'], $data['ErrorMessageEn'], $data['ErrorCode']);
         }
 
-        $object = new Report();
+        $object = new $type();
         $object->setReportData($data);
 
         return $object;
@@ -21,6 +21,6 @@ class ReportDenormalizer implements DenormalizerInterface
 
     public function supportsDenormalization(mixed $data, string $type, string $format = null) 
     {   
-        return Report::class === $type;
+        return Report::class === $type && 'xml' === $format;
     }
 }
