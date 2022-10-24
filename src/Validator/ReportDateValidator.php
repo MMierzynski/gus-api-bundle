@@ -9,7 +9,7 @@ class ReportDateValidator extends ConstraintValidator
 {
     public function validate($value, Constraint $constraint)
     {
-        if (! $constraint instanceof ReportDate) {
+        if (!$constraint instanceof ReportDate) {
             return;
         }
 
