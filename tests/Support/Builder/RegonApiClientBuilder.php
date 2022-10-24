@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 use SoapClient;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Validator\Validation;
 
 class RegonApiClientBuilder 
 {
@@ -67,16 +67,13 @@ class RegonApiClientBuilder
         return $this;
     }
 
-    public function stubValidator(?array $parameter, mixed $return): self
+    public function setValidator(): self
     {
-        /** @var ValidatorInterface|MockObject */
-        $validatorStub = $this->createMock(ValidatorInterface::class);
-        $this->stubMethod($validatorStub, 'validate', $parameter, $return);
-        
-        $this->inputValidator = new InputValidator($validatorStub);
+        $validator = Validation::createValidatorBuilder()->enableAnnotationMapping()->getValidator();
+        $this->inputValidator = new InputValidator($validator);
 
         return $this;
-    }
+    } 
 
     public function setDeserializer(): self 
     {
