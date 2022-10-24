@@ -21,6 +21,6 @@ class ReportDenormalizer implements DenormalizerInterface
 
     public function supportsDenormalization(mixed $data, string $type, string $format = null) 
     {   
-        return Report::class === $type && 'xml' === $format;
+        return Report::class === $type && 'xml' === $format && !empty($data);
     }
 }

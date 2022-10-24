@@ -37,6 +37,6 @@ class CompanyDetailsDenormalizer implements DenormalizerInterface
 
     public function supportsDenormalization(mixed $data, string $type, string $format = null) 
     {   
-        return CompanyDetails::class === $type && 'xml' === $format;
+        return CompanyDetails::class === $type && 'xml' === $format && !empty($data);
     }
 }
