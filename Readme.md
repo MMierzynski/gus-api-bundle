@@ -1,7 +1,7 @@
 # Gus Api Bundle
 
 ## Description
-Symfony 6 Bundle that allows to get information from REGON GUS API
+Symfony 6 Bundle that allows to get information from [REGON GUS API](https://api.stat.gov.pl/Home/RegonApi)
 
 ## Installation
 ```composer require mmierzynski/gus-api-bundle```
@@ -19,7 +19,7 @@ gus_api:
     api_key: 'abcde12345abcde12345'
 ```
 - env - **[Required]** GUS API environment. Accepted values: **_test_**, **_prod_**
-- api_key - **[Required]** Your API key. For test env you can use: abcde12345abcde12345  
+- api_key - **[Required]** Your API key. For test env you can use: **_abcde12345abcde12345_**  
 
 ### Usage
 
