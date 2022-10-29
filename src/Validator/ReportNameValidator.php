@@ -9,7 +9,7 @@ class ReportNameValidator extends ConstraintValidator
 {
     public function validate($value, Constraint $constraint)
     {
-        if (! $constraint instanceof ReportName) {
+        if (!$constraint instanceof ReportName) {
             return;
         }
 
