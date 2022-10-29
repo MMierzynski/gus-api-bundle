@@ -1,7 +1,7 @@
 <?php
 namespace MMierzynski\GusApi\Model\DTO\Response;
 
-class ZalogujResponse implements LoginResponseInterface
+class LoginResponse implements LoginResponseInterface
 {
     public string $ZalogujResult;
 
@@ -10,7 +10,7 @@ class ZalogujResponse implements LoginResponseInterface
         $this->ZalogujResult = $ZalogujResult;
     }
 
-    public function getAccessKey(): ?string
+    public function getAccessKey(): string
     {
         return $this->ZalogujResult;
     }

@@ -2,17 +2,28 @@
 namespace MMierzynski\GusApi\Client;
 
 use MMierzynski\GusApi\Config\Environment\EnvironmentInterface;
-use MMierzynski\GusApi\Model\DTO\Request\LoginModelInterface;
-use MMierzynski\GusApi\Model\DTO\Response\LoginResponseInterface;
+use MMierzynski\GusApi\Exception\InputValidationException;
+use MMierzynski\GusApi\Validator\InputValidator;
+use SoapHeader;
+use Symfony\Component\Serializer\SerializerInterface;
 
 abstract class GusApiClient
 {
 
     protected EnvironmentInterface $environmentConfig;
 
-    protected SoapClient $client;
+    protected \SoapClient $client;
 
     protected $context;
+
+    protected SerializerInterface $serializer;
+
+    protected InputValidator $inputValidator;
+
+    /**
+     * @return string
+     */
+    abstract public function login(): string;
     
     /**
      * getEnvironment
@@ -24,5 +35,60 @@ abstract class GusApiClient
         return $this->environmentConfig;
     }
 
-    abstract public function login(): ?LoginResponseInterface; 
+    /**
+     * @param array $classMap
+     * @return SoapClient
+     */
+    protected function createSoapClient(array $classMap = []): SoapClient
+    {
+        return new SoapClient(
+            $this->environmentConfig->getWsdlUrl(),
+            [
+                'trace' => 1,
+                "stream_context" => $this->context,
+                'soap_version' => SOAP_1_2,
+                'style' => SOAP_DOCUMENT,
+                'location' => $this->getEnvironment()->getAccessUrl(),
+                'classmap' => $classMap
+            ]
+        );
+    }
+
+    
+    /**
+     * @param string $toUrl
+     * @param string $actionUrl
+     * @return array
+     */
+    protected function preapreHeaders(string $toUrl, string $actionUrl): array
+    {
+        return [
+            new SoapHeader('http://www.w3.org/2005/08/addressing', 'To', $toUrl),
+            new SoapHeader('http://www.w3.org/2005/08/addressing', 'Action', $actionUrl),
+        ];
+    }
+
+
+    /**
+     * @param ?string $sid
+     * @return void
+     */
+    protected function setContextOptions(?string $sid= null): void
+    {
+        stream_context_set_option($this->context, ['http' => [
+            'header' => 'sid: '.$sid,
+            'user_agent' => 'GUSAPI Symfony Client',
+        ]]);
+    }
+
+    protected function validateInputObject(mixed $input, array $constrinats) {
+        $errors = $this->inputValidator->validate(
+            $input, 
+            $constrinats
+        );
+
+        if (count($errors) > 0 ) {
+            throw new InputValidationException($errors);
+        }
+    }
 }

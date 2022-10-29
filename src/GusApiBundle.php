@@ -36,8 +36,6 @@ class GusApiBundle extends AbstractBundle
             if (empty($config['regon']['env']) || empty($config['regon']['api_key'])) {
                 throw new BundleMisconfigurationException('Wrong configuration for REGON API. Required keys: \'env\' and \'api_key\' under \'regon\' key');
             }
-
-            //$config['regon']['env'] = isset($config['regon']['env']) ? $config['regon']['env'] : null;
         }
 
         $container

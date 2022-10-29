@@ -9,20 +9,21 @@
     </parameters>
 
     <services>
-        <service id="MMierzynski\GusApi\Client\GusApiClient"
-            class="MMierzynski\GusApi\Client\GusApiClient">
+        <service id="MMierzynski\GusApi\Serializer\ResponseDeserializer"
+            class="MMierzynski\GusApi\Serializer\ResponseDeserializer">
+        </service>   
+
+        <service id="MMierzynski\GusApi\Validator\InputValidator"
+            class="MMierzynski\GusApi\Validator\InputValidator">
+            <argument type="service" id="validator"/>
         </service>
 
         <service id="MMierzynski\GusApi\Client\RegonApiClient"
             class="MMierzynski\GusApi\Client\RegonApiClient">
             <argument>%gus_api.regon.env%</argument>
-            <argument type="service" id="MMierzynski\GusApi\Config\Environment\EnvironmentFactory"/>
             <argument type="service" id="Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface"/>
+            <argument type="service" id="MMierzynski\GusApi\Serializer\ResponseDeserializer"/>
+            <argument type="service" id="MMierzynski\GusApi\Validator\InputValidator"/>
         </service>
-
-        <service id="MMierzynski\GusApi\Config\Environment\EnvironmentFactory"
-            class="MMierzynski\GusApi\Config\Environment\EnvironmentFactory">
-        </service>
-
     </services>
 </container>

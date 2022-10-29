@@ -2,7 +2,8 @@
 namespace MMierzynski\GusApi\Model\DTO\Request;
 
 
-class ParametryWyszukiwania {
+class SearchCompanyParams 
+{
     public string $Krs;
     public string $Krsy;
     public string $Nip;

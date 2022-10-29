@@ -2,48 +2,73 @@
 
 namespace MMierzynski\GusApi\Client;
 
+use DateTimeImmutable;
 use MMierzynski\GusApi\Config\Environment\EnvironmentFactory;
-use MMierzynski\GusApi\Model\DTO\Request\DaneSzukajPodmioty;
+use MMierzynski\GusApi\Exception\InputValidationException;
+use MMierzynski\GusApi\Exception\InvalidUserCredentialsException;
+use MMierzynski\GusApi\Model\DTO\CompanyDetails;
+use MMierzynski\GusApi\Model\DTO\Report;
+use MMierzynski\GusApi\Model\DTO\Request\FullReport;
 use MMierzynski\GusApi\Model\DTO\Request\GetValue;
-use MMierzynski\GusApi\Model\DTO\Request\LoginModelInterface;
-use MMierzynski\GusApi\Model\DTO\Request\ParametryWyszukiwania;
-use MMierzynski\GusApi\Model\DTO\Request\Zaloguj;
-use MMierzynski\GusApi\Model\DTO\Response\DaneSzukajPodmiotyResponse;
+use MMierzynski\GusApi\Model\DTO\Request\Login;
+use MMierzynski\GusApi\Model\DTO\Request\SearchCompany;
+use MMierzynski\GusApi\Model\DTO\Request\SearchCompanyParams;
+use MMierzynski\GusApi\Model\DTO\Request\SummaryReport;
+use MMierzynski\GusApi\Model\DTO\Response\FullReportResponse;
 use MMierzynski\GusApi\Model\DTO\Response\GetValueResponse;
-use MMierzynski\GusApi\Model\DTO\Response\LoginResponseInterface;
-use MMierzynski\GusApi\Model\DTO\Response\ZalogujResponse;
+use MMierzynski\GusApi\Model\DTO\Response\LoginResponse;
+use MMierzynski\GusApi\Model\DTO\Response\SearchCompanyResponse;
+use MMierzynski\GusApi\Model\DTO\Response\SummaryReportResponse;
+use MMierzynski\GusApi\Serializer\ResponseDeserializer;
+use MMierzynski\GusApi\Utils\ReportType;
+use MMierzynski\GusApi\Validator\InputValidator;
+use MMierzynski\GusApi\Validator\ReportDate;
+use MMierzynski\GusApi\Validator\ReportName;
 use SoapFault;
-use SoapHeader;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\Validator\Constraints\Date;
+use Symfony\Component\Validator\Constraints\NotBlank;
 
 class RegonApiClient extends GusApiClient
 {
-    public function __construct(private string $envName, private EnvironmentFactory $envFactory, private ParameterBagInterface $parameters)
+    public function __construct(
+        string $envName, 
+        private ParameterBagInterface $parameters, 
+        private ResponseDeserializer $deserializer,
+        InputValidator $inputValidator,
+        ?\SoapClient $client = null
+    ) 
     {
-        $this->environmentConfig = $this->envFactory->createEnvironment('regon', $envName);
-
+        $envFactory = new EnvironmentFactory();
+        $this->environmentConfig = $envFactory->createEnvironment('regon', $envName);
         $this->context = stream_context_create([]);
+        $this->inputValidator = $inputValidator;
 
-        $this->client = new SoapClient(
-            $this->environmentConfig->getWsdlUrl(),
-            [
-                'trace' => 1,
-                "stream_context" => $this->context,
-                'soap_version' => SOAP_1_2,
-                'style' => SOAP_DOCUMENT,
-                'location' => $this->getEnvironment()->getAccessUrl(),
-                'classmap' => [
-                    'ZalogujResponse' => ZalogujResponse::class,
-                    'GetValueResponse' => GetValueResponse::class,
-                    'DaneSzukajPodmiotyResponse' => DaneSzukajPodmiotyResponse::class,
-                ]
-            ]
-        );
+        if (!$client) {
+            $client = $this->createSoapClient([
+                'ZalogujResponse' => LoginResponse::class,
+                'GetValueResponse' => GetValueResponse::class,
+                'DaneSzukajPodmiotyResponse' => SearchCompanyResponse::class,
+                'DanePobierzPelnyRaportResponse' => FullReportResponse::class,
+                'DanePobierzRaportZbiorczyResponse' => SummaryReportResponse::class
+            ]);
+        }
+
+        $this->client = $client;
     }
 
-    public function login(): ?LoginResponseInterface
+    /**
+     * @throws SoapFault
+     * @throws InvalidUserCredentialsException
+     */
+    public function login(): string
     {
         $apiKey = $this->parameters->get('gus_api.regon.api_key');
+        $loginInput = new Login($apiKey);
+        
+        $this->validateInputObject($loginInput, [
+            ['pKluczUzytkownika' => new NotBlank()]
+        ]);
 
         $headers = $this->preapreHeaders(
             $this->getEnvironment()->getAccessUrl(),
@@ -52,19 +77,19 @@ class RegonApiClient extends GusApiClient
         
         $this->setContextOptions();
 
-        try {
-            $response = $this->client->__soapCall(
-                'Zaloguj', 
-                [new Zaloguj($apiKey)],
-                [],
-                $headers
-            );    
-        } catch (SoapFault $soapException) {
-            dd($soapException);
-            return null;
+        /** @var LoginResponse $response */
+        $response = $this->client->__soapCall(
+            'Zaloguj', 
+            [$loginInput],
+            [],
+            $headers
+        );    
+
+        if (empty($response->getAccessKey())) {
+            throw new InvalidUserCredentialsException();
         }
 
-        return $response;
+        return $response->getAccessKey();
     }
 
     public function isUserLogged(): bool
@@ -81,11 +106,12 @@ class RegonApiClient extends GusApiClient
             [new GetValue('StatusSesji')], 
             [], 
             $headers);
+        
 
         return (bool)$isUserLogged->GetValueResult;
     }
 
-    public function searchForCompany(string $sid, ParametryWyszukiwania $searchParams)
+    public function searchForCompany(string $sid, SearchCompanyParams $searchParams)
     {
         $headers = $this->preapreHeaders(
             $this->getEnvironment()->getAccessUrl(),
@@ -93,29 +119,89 @@ class RegonApiClient extends GusApiClient
         );
         
         $this->setContextOptions($sid);
-
+        /** @var SearchCompanyResponse $response */
         $response = $this->client->__soapCall(
             'DaneSzukajPodmioty', 
-            [new DaneSzukajPodmioty($searchParams)], 
+            [new SearchCompany($searchParams)], 
             [], 
             $headers
         );
-        dump($response);
+    
+        return $this->deserializer->deserialize(
+            $response->DaneSzukajPodmiotyResult, 
+            CompanyDetails::class
+        );
     }
 
-    protected function preapreHeaders(string $toUrl, string $actionUrl): array
+    public function getFullReport(string $sid, string $regon, string $reportName): Report 
     {
-        return [
-            new SoapHeader('http://www.w3.org/2005/08/addressing', 'To', $toUrl),
-            new SoapHeader('http://www.w3.org/2005/08/addressing', 'Action', $actionUrl),
-        ];
+        $headers = $this->preapreHeaders(
+            $this->getEnvironment()->getAccessUrl(),
+            'http://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/DanePobierzPelnyRaport'
+        );
+
+        $fullReportInput = new FullReport($regon, $reportName);
+
+        $this->validateInputObject(
+            $fullReportInput, 
+            [
+                ['pNazwaRaportu' => new NotBlank()],
+                ['pNazwaRaportu' => new ReportName(ReportType::TYPE_REGON_FULL)]
+            ]
+        );
+
+        $this->setContextOptions($sid);
+
+        $response = $this->client->__soapCall(
+            'DanePobierzPelnyRaport',
+            [$fullReportInput],
+            [],
+            $headers
+        );
+
+        $report = $this->deserializer->deserialize(
+            $response->DanePobierzPelnyRaportResult,
+            Report::class
+        );
+
+        $report->setReportName($reportName);
+
+        return $report;
     }
 
-    protected function setContextOptions(?string $sid= null): void
+    public function getSummaryReport(string $sid, string $reportName, DateTimeImmutable $reportDate) 
     {
-        stream_context_set_option($this->context, ['http' => [
-            'header' => 'sid: '.$sid,
-            'user_agent' => 'GUSAPI Symfony Client',
-        ]]);
+        $headers = $this->preapreHeaders(
+            $this->getEnvironment()->getAccessUrl(),
+            'http://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/DanePobierzRaportZbiorczy'
+        );
+
+        $this->setContextOptions($sid);
+
+        $date = date('Y-m-d', $reportDate->getTimestamp());
+
+        $summaryReportInput = new SummaryReport($date, $reportName);
+
+        $this->validateInputObject(
+            $summaryReportInput, 
+            [
+                ['pNazwaRaportu' => new NotBlank()],
+                ['pNazwaRaportu' => new ReportName(ReportType::TYPE_REGON_SUMMARY)],
+                ['pDataRaportu' => new NotBlank()],
+                ['pDataRaportu' => new Date()],
+                ['pDataRaportu' => new ReportDate()]
+            ]
+        );
+
+        $response = $this->client->__soapCall(
+            'DanePobierzRaportZbiorczy',
+            [$summaryReportInput],
+            [],
+            $headers
+        );
+
+        $report = $this->deserializer->deserialize($response->DanePobierzRaportZbiorczyResult, Report::class);
+        $report->setReportName($reportName);
+        return $report;
     }
 }
